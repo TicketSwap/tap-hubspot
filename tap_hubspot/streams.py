@@ -107,12 +107,26 @@ class DealsStream(HubspotStream):
     def get_url_params(
         self, context: Optional[dict], next_page_token: Optional[Any]
     ) -> Dict[str, Any]:
-        selected_properties = self.get_selected_properties()
+        selected_properties = self._return_filtered_properties(self.get_selected_properties())
         params = super().get_url_params(context, next_page_token)
         params["properties"] = ",".join(selected_properties)
         params["archived"] = context["archived"]
         params["associations"] = ",".join(HUBSPOT_OBJECTS)
         return params
+    
+    def _return_filtered_properties(self, properties) -> List[dict]:
+        ignore_fields = [
+            "hs_v2_date",
+            "hs_time_in",
+            "hs_v2_cumulative_time_in",
+            "hs_v2_latest_time_in",
+            "hs_date_entered",
+            "hs_date_exited",
+        ]
+        filtered_properties = [
+            property for property in properties if all([ignore_field not in property for ignore_field in ignore_fields])
+        ]
+        return filtered_properties
 
     @property
     def schema(self) -> dict:
